@@ -1,0 +1,15 @@
+# Datatypes (KEYWORD1)
+SensorReading	KEYWORD1
+SesnorData	KEYWORD1
+Url	KEYWORD1
+VivariumMonitorConfig	KEYWORD1
+VivariumMonitor	KEYWORD1
+PIDController	KEYWORD1
+
+# Methods and Functions (KEYWORD2)
+setDigitalOneHandler	KEYWORD2
+setDigitalTwoHandler	KEYWORD2
+setAnalogHandler	KEYWORD2
+handle_events	KEYWORD2
+init	KEYWORD2
+add_reading	KEYWORD2
