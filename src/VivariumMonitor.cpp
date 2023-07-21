@@ -374,8 +374,8 @@ void VivariumMonitor::readSHTsensor(SensorData* output)
     DEBUG_MSG("Activating heater\n");
   }
 
-  // Give the device 5 sec to cool down after turning on heater
-  use_cache = !(cmd == SHT40_HEATER_CMD) && millis() - last_heated < 5000 && last_heated > 5000;
+  // Give the device 15 sec to cool down after turning on heater
+  use_cache = !(cmd == SHT40_HEATER_CMD) && millis() - last_heated < 15000 && last_heated > 15000;
   
   if (!use_cache)
   {
