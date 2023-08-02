@@ -1,5 +1,7 @@
 /*
  * Stock firmware for Vivarium Monitors
+ * Copyright Sal Skare
+ * Released under GPL3 license
  */
 
 #include <VivariumMonitor.h>

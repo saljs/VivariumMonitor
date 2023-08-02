@@ -1,3 +1,9 @@
+/*
+ * VivariumMonitor.cpp
+ * Copyright Sal Skare
+ * Released under GPL3 license
+ */
+
 #include "VivariumMonitor.h"
 
 #include <Wire.h>
@@ -300,6 +306,11 @@ bool crc8_check(int value, byte check)
 
 void reset_i2c_bus()
 {
+  /*
+   * Code in this function adapted from:
+   *   https://www.forward.com.au/pfod/ArduinoProgramming/I2C_ClearBus/index.html
+   *   Written by Matthew Ford, released into open domain.
+   */
   int counter, clockCount = 20;
 
   DEBUG_MSG("Resetting i2c bus...\n");

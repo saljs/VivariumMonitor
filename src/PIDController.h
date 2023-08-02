@@ -1,3 +1,9 @@
+/*
+ * PIDController.h
+ * Copyright Sal Skare
+ * Released under GPL3 license
+ */
+
 #ifndef PIDCONTROLLER_H
 #define PIDCONTROLLER_H
 

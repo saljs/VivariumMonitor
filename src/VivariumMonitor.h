@@ -1,3 +1,9 @@
+/*
+ * VivariumMonitor.h
+ * Copyright Sal Skare
+ * Released under GPL3 license
+ */
+
 #ifndef VIVARIUMMON_H
 #define VIVARIUMMON_H
 

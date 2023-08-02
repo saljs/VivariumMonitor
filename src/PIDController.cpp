@@ -1,3 +1,9 @@
+/*
+ * PIDController.cpp
+ * Copyright Sal Skare
+ * Released under GPL3 license
+ */
+
 #include "PIDController.h"
 
 PIDController::PIDController(float target,
