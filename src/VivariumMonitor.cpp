@@ -178,9 +178,12 @@ void VivariumMonitor::handle_events() {
     }
 
     // Update outputs
-    set_analog(analog_func(data));
-    set_digital_1(digital_1_func(data));
-    set_digital_2(digital_2_func(data));
+    if (analog_func)
+        set_analog(analog_func(data));
+    if (digital_1_func)
+        set_digital_1(digital_1_func(data));
+    if (digital_2_func)
+        set_digital_2(digital_2_func(data));
     write_outputs();
 
     // Check post stats timer
@@ -532,7 +535,7 @@ void VivariumMonitor::update_firmware()
   // Send HTTP request
   if (wifi.connected()) {
     wifi.printf("GET %s HTTP/1.0\r\nHost: %s:%d\r\nUser-Agent: VivMonitor1.0\r\nConnection: close\r\nContent-Length: 0\r\nX-FWVER: " FIRMWARE_VERSION "\r\n\r\n",
-                        update_url.path, update_url.host, update_url.port);
+        update_url.path, update_url.host, update_url.port);
   }
   else {
     DEBUG_MSG("Connection failed before a request could be made.\n");
