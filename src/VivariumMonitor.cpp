@@ -493,6 +493,7 @@ void VivariumMonitor::readTempSensors(SensorData* output)
 
   //request temps
   thermometers.requestTemperatures();
+  delay(300);
   output->high_temp.value = -55;
   output->low_temp.value = 125;
 
