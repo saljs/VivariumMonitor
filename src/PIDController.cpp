@@ -20,14 +20,16 @@ PIDController::PIDController(float target,
 }
 
 byte PIDController::add_reading(SensorReading reading) {
+  float error, derivative;
   if (reading.has_error) {
-    // In the case of a sensor error, return 0
-    return 0;
+    // In the case of a sensor error, return the last value
+    error = _prev_error;
   }
-  
+  else { 
+    error = _target - reading.value;
+  }
   // We assume dt is 1, since we sample every second
-  float error = _target - reading.value;
-  float derivative = error - _prev_error;
+  derivative = error - _prev_error;
   _integral = (_integral * _dropoff) + error;
   _prev_error = error;
 
