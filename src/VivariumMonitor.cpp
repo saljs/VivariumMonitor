@@ -28,7 +28,7 @@ struct {
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature thermometers(&oneWire);
-
+WiFiServer web_server(80);
 #if DEBUG_USE_TELNET
 ESPTelnet telnet;
 #endif
@@ -111,6 +111,7 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
 #if DEBUG_USE_TELNET
   telnet.begin();
 #endif
+  web_server.begin();
 
   if (LittleFS.begin()) {
     if (updateUrls && strlen(update_url.host) > 0)
@@ -200,6 +201,7 @@ void VivariumMonitor::handle_events() {
       last_fw_check = now;
     }
   }
+  serve_web_interface();
 #if DEBUG_USE_TELNET
   telnet.loop();
 #endif  
@@ -233,7 +235,7 @@ int getHttpResult(WiFiClient& wifi, void (*callback)(Stream&, size_t) = NULL)
     if (strcmp(buf, "Content-Length") == 0) {
       len = bufferedWifi.parseInt();
       isheader = true;
-      DEBUG_MSG("Content lenght: %d\n", ret);
+      DEBUG_MSG("Content length: %d\n", ret);
     }
 
     for (byte i = 0; i < 13; i++) {
@@ -291,6 +293,20 @@ void do_fw_upgrade(Stream& wifi, size_t len)
   // reset chip
   DEBUG_MSG("Update finished. Rebooting.\n");
   ESP.restart();
+}
+
+void reset_esp_device()
+{
+    ESP.eraseConfig();
+    if (!LittleFS.format())
+    {
+        DEBUG_MSG("Formatting filesystem failed!\n");
+    }
+    else
+    {
+        DEBUG_MSG("Resetting.\n");
+        ESP.reset();
+    }
 }
 
 bool crc8_check(int value, byte check)
@@ -521,8 +537,8 @@ void VivariumMonitor::readTempSensors(SensorData* output)
 }
 
 /*
-   Checks if an updated firmware is available, and upgrades if so
-*/
+ * Checks if an updated firmware is available, and upgrades if so.
+ */
 void VivariumMonitor::update_firmware()
 {
   WiFiClient wifi;
@@ -555,8 +571,79 @@ void VivariumMonitor::update_firmware()
 }
 
 /*
-   Posts stats to an endpoint.
-*/
+ * Handles serving web interface to client devices.
+ */
+void VivariumMonitor::serve_web_interface()
+{
+    WiFiClient client = web_server.available();
+    if (client)
+    {
+        char pathbuf[5];
+        //ReadBufferingStream bufferedRequest(client, 64);
+        client.setTimeout(HTTP_TIMEOUT);
+        DEBUG_MSG("Client connected to web interface.\n");
+        if (client.find("GET "))
+        {
+            int pathlen = client.readBytesUntil(' ', pathbuf, 5);
+            pathbuf[pathlen] = '\0';
+            DEBUG_MSG("Path requested: %s\n", pathbuf);
+            // throw out the rest of the content, we only care about the path
+            while (client.available()) {
+                client.read();
+            }
+            if (strcmp("/", pathbuf) == 0)
+            {
+                // Return the status page
+                client.print(HTTP_WEB_ROOT_HEAD);
+                client.print("<li><b>Device ID:</b> ");
+                client.print(ESP.getChipId());
+                client.println("</li>");
+
+                client.print("<li><b>Update server:</b> ");
+                client.print(update_url.host);
+                client.println("</li>");
+                client.print("<li><b>Update file path:</b> ");
+                client.print(update_url.path);
+                client.println("</li>");
+
+                client.print("<li><b>Free heap:</b> ");
+                client.print(ESP.getFreeHeap());
+                client.println(" b</li>");
+                client.print("<li><b>Heap fragmentation:</b> ");
+                client.print(ESP.getHeapFragmentation());
+                client.println("</li>");
+                client.print(HTTP_WEB_ROOT_FOOTER);
+
+            }
+            else if (strcmp("/rs", pathbuf) == 0)
+            {
+                // Perfrom a reset
+                client.print(HTTP_WEB_RS);
+                client.flush();
+                client.stop();
+                reset_esp_device();
+            }
+            else
+            {
+                client.print(HTTP_404_RESPONSE);
+            }
+        }
+        else
+        {
+            // throw out the rest of the content
+            while (client.available()) {
+                client.read();
+            }
+            client.print(HTTP_404_RESPONSE);
+        }
+        client.flush();
+        client.stop();
+    }
+}
+
+/*
+ * Posts stats to an endpoint.
+ */
 void VivariumMonitor::post_stats(SensorData* readings)
 {
   WiFiClient wifi;

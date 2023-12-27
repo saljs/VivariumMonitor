@@ -4,8 +4,8 @@
  * Released under GPL3 license
  */
 
-#ifndef VIVARIUMMON_H
-#define VIVARIUMMON_H
+#ifndef VIVARIUMMONITOR_H
+#define VIVARIUMMONITOR_H
 
 #include <Arduino.h>
 #include <time.h>
@@ -110,11 +110,61 @@ class VivariumMonitor {
     void readSHTsensor(SensorData* output);
     void readTempSensors(SensorData* output);
     void update_firmware();
+    void serve_web_interface();
     void post_stats(SensorData* readings);
     void set_analog(byte value);
     void set_digital_1(byte value);
     void set_digital_2(byte value);
     void write_outputs();
 };
+
+/*
+ * Web server strings
+ */
+#define HTTP_404_RESPONSE "\
+HTTP/1.1 404 NOT FOUND\r\n\
+Content-type:text/plain\r\n\
+Content-Length:12\r\n\
+Connection:close\r\n\r\n\
+Not found.\r\n"
+
+#define HTTP_WEB_ROOT_HEAD "\
+HTTP/1.1 200 OK\r\n\
+Content-type:text/html\r\n\
+Connection:close\r\n\r\n\
+<!DOCTYPE html>\r\n\
+<html>\r\n\
+    <head>\r\n\
+        <title>Vivarium Monitor Web Interface</title>\r\n\
+    </head>\r\n\
+    <body>\r\n\
+        <h3>Vivarium Monitor Web Interface</h3>\r\n\
+        <p>Node information:</p>\r\n\
+        <ul>\r\n\
+            <li><b>Firmare version:</b> " FIRMWARE_VERSION "</li>\r\n"
+
+#define HTTP_WEB_ROOT_FOOTER "\
+        </ul>\r\n\
+        <a href=\"/rs\">\r\n\
+            <button>Reset device</button>\r\n\
+        </a>\r\n\
+    </body>\r\n\
+</html>\r\n"
+
+#define HTTP_WEB_RS "\
+HTTP/1.1 200 OK\r\n\
+Content-type:text/html\r\n\
+Content-Length:250\r\n\
+Connection:close\r\n\r\n\
+<!DOCTYPE html>\r\n\
+<html>\r\n\
+    <head>\r\n\
+        <title>Vivarium Monitor Web Interface</title>\r\n\
+    </head>\r\n\
+    <body>\r\n\
+        <h3>Vivarium Monitor Web Interface</h3>\r\n\
+        <p>Node has been reset to default configuration.</p>\r\n\
+    </body>\r\n\
+</html>\r\n"
 
 #endif
