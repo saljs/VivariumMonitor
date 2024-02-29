@@ -49,7 +49,8 @@ typedef struct SensorData {
 typedef struct VivariumMonitorConfig {
   // Hardware setup
   bool has_sht_sensor;
-  int num_therm_sensors;
+  unsigned int num_therm_sensors;
+  unsigned int sample_interval;
 
   // Time setup
   const char* ntp_zone;

@@ -157,7 +157,8 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
 void VivariumMonitor::handle_events() {
   time_t now;
   time(&now);
-  if (now > last_read)
+
+  if (now - last_read >= monitor_config.sample_interval)
   {
     SensorData data;
     last_read = now;
@@ -191,21 +192,22 @@ void VivariumMonitor::handle_events() {
     if (digital_2_func)
         set_digital_2(digital_2_func(data));
     write_outputs();
-
-    // Check post stats timer
-    if (now - last_post_stats >= monitor_config.stats_interval && monitor_config.stats_url.set)
-    {
-      post_stats(&data);
-      last_post_stats = now;
-    }
-
-    // Check firmware update timer
-    if (now - last_fw_check >= FIRMWARE_CHECK_SECONDS && update_url.set)
-    {
-      update_firmware();
-      last_fw_check = now;
-    }
   }
+
+  // Check post stats timer
+  if (now - last_post_stats >= monitor_config.stats_interval && monitor_config.stats_url.set)
+  {
+    post_stats(&data);
+    last_post_stats = now;
+  }
+
+  // Check firmware update timer
+  if (now - last_fw_check >= FIRMWARE_CHECK_SECONDS && update_url.set)
+  {
+    update_firmware();
+    last_fw_check = now;
+  }
+
   serve_web_interface();
 #if DEBUG_USE_TELNET
   telnet.loop();
