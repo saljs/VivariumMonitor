@@ -121,7 +121,6 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
       urlFile.write((char*)(&update_url), sizeof(update_url));
       urlFile.close();
       DEBUG_MSG("Updating update URL file to: http://%s:%d%s\n", update_url.host, update_url.port, update_url.path);
-      ESP.restart();
     }
     else if (LittleFS.exists(FW_URL_FILE))
     {
@@ -140,6 +139,12 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
   {
     update_url.set = false;
     DEBUG_MSG("Error, cannot mount FS! Proceeding without it.\n");
+  }
+
+  // If we've entered the config portal, reset to clear out heap and read in new config.
+  if (updateUrls)
+  {
+    ESP.restart();
   }
 
   // Give NTP time to sync 

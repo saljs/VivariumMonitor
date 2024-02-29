@@ -33,11 +33,6 @@ byte PIDController::add_reading(SensorReading reading) {
   _integral = (_integral * _dropoff) + error;
   _prev_error = error;
 
-#ifdef DEBUG_ESP_CORE
-  Serial.print("PID controller error: ");
-  Serial.println(error);
-#endif
-
   // Clamp the output to the range of a byte
   int output = (_Kp * error) + (_Ki * _integral) + (_Kd * derivative);
   if (output < -127) output = -127;

@@ -7,7 +7,7 @@
 #ifndef PIDCONTROLLER_H
 #define PIDCONTROLLER_H
 
-#include "VivariumMonitor.h"
+#include "types.h"
 
 class PIDController {
   public:

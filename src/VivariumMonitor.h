@@ -9,6 +9,7 @@
 
 #include <Arduino.h>
 #include <time.h>
+#include "types.h"
 
 // Set up debugging if it's turned on
 #ifdef DEBUG_ESP_CORE
@@ -27,7 +28,6 @@ extern ESPTelnet telnet;
 #define HTTP_TIMEOUT 8000
 #define FIRMWARE_CHECK_SECONDS 14400
 #define FW_URL_FILE F("/fw_url")
-#define CONFIG_STR_LEN 126
 
 #define I2C_SLAVE_ADDRESS 42
 #define SHT40_ADDRESS 0x44
@@ -37,53 +37,6 @@ extern ESPTelnet telnet;
 
 #define RESOLUTION 9
 #define ONE_WIRE_BUS 2   //D4
-
-
-/*
- * A monad that indicates if a sensor reading was sucessful, and it's value.
- */
-typedef struct SensorReading {
-  bool has_error;
-  float value;
-} SensorReading;
-
-/*
- * A collection of sensor readings.
- */
-typedef struct SensorData {
-  SensorReading humidity;
-  SensorReading air_temp;
-  SensorReading high_temp;
-  SensorReading low_temp;
-  time_t timestamp;
-} SensorData;
-
-/*
- * Simple URL definition
- */
- typedef struct Url {
-  char host[CONFIG_STR_LEN];
-  char path[CONFIG_STR_LEN];
-  unsigned int port;
-  bool set;
-} Url;
- 
-/*
- * Configuration data for the VivariumMonitor class.
- */
-typedef struct VivariumMonitorConfig {
-  // Hardware setup
-  bool has_sht_sensor;
-  int num_therm_sensors;
-
-  // Time setup
-  const char* ntp_zone;
-  const char* ntp_server;
-
-  // Network endpoint setup
-  Url stats_url;
-  unsigned int stats_interval;
-} ViviariumMonitorConfig;
 
 /*
  * Interfaces to the sensors, as well as the output controller.
