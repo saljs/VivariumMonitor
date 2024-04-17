@@ -192,13 +192,13 @@ void VivariumMonitor::handle_events() {
     if (digital_2_func)
         set_digital_2(digital_2_func(data));
     write_outputs();
-  }
 
-  // Check post stats timer
-  if (now - last_post_stats >= monitor_config.stats_interval && monitor_config.stats_url.set)
-  {
-    post_stats(&data);
-    last_post_stats = now;
+    // Check post stats timer
+    if (now - last_post_stats >= monitor_config.stats_interval && monitor_config.stats_url.set)
+    {
+      post_stats(&data);
+      last_post_stats = now;
+    }
   }
 
   // Check firmware update timer
