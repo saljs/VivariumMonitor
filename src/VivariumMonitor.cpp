@@ -242,7 +242,7 @@ int getHttpResult(WiFiClient& wifi, void (*callback)(Stream&, size_t) = NULL)
     if (strcmp(buf, "Content-Length") == 0) {
       len = bufferedWifi.parseInt();
       isheader = true;
-      DEBUG_MSG("Content length: %d\n", ret);
+      DEBUG_MSG("Content length: %d\n", len);
     }
 
     for (byte i = 0; i < 13; i++) {
