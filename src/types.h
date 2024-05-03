@@ -20,7 +20,8 @@ typedef unsigned char byte;
 /*
  * A monad that indicates if a sensor reading was sucessful, and its value.
  */
-typedef struct SensorReading {
+typedef struct SensorReading
+{
   bool has_error;
   float value;
 } SensorReading;
@@ -28,7 +29,8 @@ typedef struct SensorReading {
 /*
  * A collection of sensor readings.
  */
-typedef struct SensorData {
+typedef struct SensorData
+{
   SensorReading humidity;
   SensorReading air_temp;
   SensorReading high_temp;
@@ -39,17 +41,19 @@ typedef struct SensorData {
 /*
  * Simple URL definition
  */
- typedef struct Url {
+typedef struct Url
+{
   char host[CONFIG_STR_LEN];
   char path[CONFIG_STR_LEN];
   unsigned int port;
   bool set;
 } Url;
- 
+
 /*
  * Configuration data for the VivariumMonitor class.
  */
-typedef struct VivariumMonitorConfig {
+typedef struct VivariumMonitorConfig
+{
   // Hardware setup
   bool has_sht_sensor;
   unsigned int num_therm_sensors;
@@ -64,4 +68,4 @@ typedef struct VivariumMonitorConfig {
   unsigned int stats_interval;
 } ViviariumMonitorConfig;
 
-# endif
+#endif

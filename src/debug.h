@@ -15,7 +15,9 @@
 #include <ESPTelnet.h>
 extern ESPTelnet telnet;
 #undef DEBUG_MSG
-#define DEBUG_MSG(format, ...) DEBUG_TELNET.printf(PSTR(format), ##__VA_ARGS__); DEBUG_SERIAL.printf(PSTR(format), ##__VA_ARGS__)
+#define DEBUG_MSG(format, ...)                                                 \
+  DEBUG_TELNET.printf(PSTR(format), ##__VA_ARGS__);                            \
+  DEBUG_SERIAL.printf(PSTR(format), ##__VA_ARGS__)
 #else
 #define DEBUG_MSG(...)
 #endif

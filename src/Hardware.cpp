@@ -8,14 +8,15 @@
 #include "debug.h"
 
 #include <Arduino.h>
-#include <Wire.h>
-#include <OneWire.h>
 #include <DallasTemperature.h>
+#include <OneWire.h>
+#include <Wire.h>
 
 /**********************************************************
    Global vars
  **********************************************************/
-struct {
+struct
+{
   byte analog;
   byte digital_1;
   byte digital_2;
@@ -25,7 +26,9 @@ struct {
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature thermometers(&oneWire);
 
-void Hardware::init(VivariumMonitorConfig* config) {
+void
+Hardware::init(VivariumMonitorConfig* config)
+{
   monitor_config = config;
 
   // start i2c interface
@@ -53,11 +56,11 @@ void Hardware::init(VivariumMonitorConfig* config) {
    Helper functions
  **********************************************************/
 
-bool crc8_check(int value, byte check)
+bool
+crc8_check(int value, byte check)
 {
   byte crc = 0xFF;
-  for (byte bit = 16; bit > 0; bit--)
-  {
+  for (byte bit = 16; bit > 0; bit--) {
     if (((value & 0x8000) >> 8) == (crc & 0x80))
       crc = (crc << 1);
     else
@@ -67,7 +70,8 @@ bool crc8_check(int value, byte check)
   return crc == check;
 }
 
-void reset_i2c_bus()
+void
+reset_i2c_bus()
 {
   /*
    * Code in this function adapted from:
@@ -82,24 +86,25 @@ void reset_i2c_bus()
   pinMode(SCL, INPUT_PULLUP);
 
   // Check SCL is not held low
-  if (digitalRead(SCL) == LOW)
-  {
+  if (digitalRead(SCL) == LOW) {
     DEBUG_MSG("I2C bus error. Could not clear sclPin clock line held low\n");
     return;
   }
 
   // Reset the bus
-  while (digitalRead(SDA) == LOW && clockCount > 0)
-  {
+  while (digitalRead(SDA) == LOW && clockCount > 0) {
     clockCount--;
     // Note: I2C bus is open collector so do NOT drive sclPin or sdaPin high.
-    pinMode(SCL, INPUT); // release sclPin pullup so that when made output it will be LOW
-    pinMode(SCL, OUTPUT); // then clock sclPin Low
-    delayMicroseconds(10); //  for >5us
-    pinMode(SCL, INPUT); // release sclPin LOW
+    pinMode(
+      SCL,
+      INPUT); // release sclPin pullup so that when made output it will be LOW
+    pinMode(SCL, OUTPUT);       // then clock sclPin Low
+    delayMicroseconds(10);      //  for >5us
+    pinMode(SCL, INPUT);        // release sclPin LOW
     pinMode(SCL, INPUT_PULLUP); // turn on pullup resistors again
     // do not force high as slave may be holding it low for clock stretching.
-    delayMicroseconds(10); //  for >5u so that even the slowest I2C devices are handled.
+    delayMicroseconds(
+      10); //  for >5u so that even the slowest I2C devices are handled.
     //  loop waiting for sclPin to become High only wait 2sec.
     counter = 20;
     while (digitalRead(SCL) == LOW && counter > 0) {
@@ -107,25 +112,29 @@ void reset_i2c_bus()
       delay(100);
     }
     if (digitalRead(SCL) == LOW) { // still low after 2 sec error
-      DEBUG_MSG("I2C bus error. Could not clear. sclPin clock line held low by slave clock stretch for >2sec\n");
+      DEBUG_MSG("I2C bus error. Could not clear. sclPin clock line held low by "
+                "slave clock stretch for >2sec\n");
       return;
     }
   }
-  if (digitalRead(SDA) == LOW)
-  {
-      DEBUG_MSG("I2C bus error. Could not clear. sdaPin data line held low\n");
-      return;
+  if (digitalRead(SDA) == LOW) {
+    DEBUG_MSG("I2C bus error. Could not clear. sdaPin data line held low\n");
+    return;
   }
   // else pull sdaPin line low for Start or Repeated Start
-  pinMode(SDA, INPUT); // remove pullup.
-  pinMode(SDA, OUTPUT);  // and then make it LOW i.e. send an I2C Start or Repeated start control.
-  // When there is only one I2C master a Start or Repeat Start has the same function as a Stop and clears the bus.
-  // A Repeat Start is a Start occurring after a Start with no intervening Stop.
+  pinMode(SDA, INPUT);  // remove pullup.
+  pinMode(SDA, OUTPUT); // and then make it LOW i.e. send an I2C Start or
+                        // Repeated start control.
+  // When there is only one I2C master a Start or Repeat Start has the same
+  // function as a Stop and clears the bus. A Repeat Start is a Start occurring
+  // after a Start with no intervening Stop.
   delayMicroseconds(10); // wait >5us
-  pinMode(SDA, INPUT); // remove output low
-  pinMode(SDA, INPUT_PULLUP); // and make sdaPin high i.e. send I2C STOP control.
+  pinMode(SDA, INPUT);   // remove output low
+  pinMode(SDA,
+          INPUT_PULLUP); // and make sdaPin high i.e. send I2C STOP control.
   delayMicroseconds(10); // x. wait >5us
-  pinMode(SDA, INPUT_PULLUP); // Make sdaPin (data) and sclPin (clock) pins Inputs with pullup.
+  pinMode(SDA, INPUT_PULLUP); // Make sdaPin (data) and sclPin (clock) pins
+                              // Inputs with pullup.
   pinMode(SCL, INPUT_PULLUP);
 
   // Start Wire interface
@@ -135,14 +144,15 @@ void reset_i2c_bus()
 /**********************************************************
    Private functions
  **********************************************************/
-void Hardware::readSHTsensor(SensorData& output)
+void
+Hardware::readSHTsensor(SensorData& output)
 {
   int bus_status;
   bool use_cache;
   byte cmd = SHT40_READ_CMD;
   DEBUG_MSG("Reading SHT40 sensor...\n");
   if (output.timestamp - last_heated >= HEAT_INTERVAL) {
-    //send heater command
+    // send heater command
     last_heated = output.timestamp;
     cmd = SHT40_HEATER_CMD;
     DEBUG_MSG("Activating heater\n");
@@ -150,18 +160,16 @@ void Hardware::readSHTsensor(SensorData& output)
 
   // Give the device 15 sec to cool down after turning on heater
   use_cache = !(cmd == SHT40_HEATER_CMD) && output.timestamp - last_heated < 15;
-  
-  if (!use_cache)
-  {
+
+  if (!use_cache) {
     // send command
     Wire.beginTransmission(SHT40_ADDRESS);
     Wire.write(cmd);
     bus_status = Wire.endTransmission();
-    if (bus_status > 0)
-    {
-      DEBUG_MSG("Error requesting data from SHT40! I2c bus error %d.\n", bus_status);
-      if (bus_status == 4)
-      {
+    if (bus_status > 0) {
+      DEBUG_MSG("Error requesting data from SHT40! I2c bus error %d.\n",
+                bus_status);
+      if (bus_status == 4) {
         // status 4 indicates error with bus
         reset_i2c_bus();
       }
@@ -170,18 +178,16 @@ void Hardware::readSHTsensor(SensorData& output)
       return;
     }
   }
-  
-  if(cmd == SHT40_HEATER_CMD || use_cache)
-  {
+
+  if (cmd == SHT40_HEATER_CMD || use_cache) {
     DEBUG_MSG("Using cached temp/humidity value.\n");
     return;
   }
 
-  //attempt to read from sensor
+  // attempt to read from sensor
   delay(300);
   byte len = Wire.requestFrom(SHT40_ADDRESS, 6);
-  if (len != 6)
-  {
+  if (len != 6) {
     DEBUG_MSG("Error: SHT40 returned %d bytes, not 6.\n", len);
     output.air_temp.has_error = true;
     output.humidity.has_error = true;
@@ -190,21 +196,17 @@ void Hardware::readSHTsensor(SensorData& output)
 
   // read response into a buffer
   int buff[6];
-  for (byte i = 0; i < 6; i++)
-  {
+  for (byte i = 0; i < 6; i++) {
     buff[i] = Wire.read();
   }
 
   // check tempurature crc
   int t_ticks = (buff[0] << 8) + buff[1];
   byte checksum_t = buff[2];
-  if (!crc8_check(t_ticks, checksum_t))
-  {
+  if (!crc8_check(t_ticks, checksum_t)) {
     output.air_temp.has_error = true;
     DEBUG_MSG("SHT40 tempurature checksum verification failed!\n");
-  }
-  else
-  {
+  } else {
     output.air_temp.has_error = false;
     output.air_temp.value = -45.0 + 175.0 * (float)t_ticks / 65535.0;
   }
@@ -212,34 +214,34 @@ void Hardware::readSHTsensor(SensorData& output)
   // check humidity crc
   int rh_ticks = (buff[3] << 8) + buff[4];
   byte checksum_rh = buff[5];
-  if (!crc8_check(rh_ticks, checksum_rh))
-  {
+  if (!crc8_check(rh_ticks, checksum_rh)) {
     output.humidity.has_error = true;
     DEBUG_MSG("SHT40 humidity checksum verification failed!\n");
-  }
-  else
-  {
+  } else {
     output.humidity.has_error = false;
     output.humidity.value = -6.0 + 125.0 * (float)rh_ticks / 65535.0;
-    if (output.humidity.value > 100) output.humidity.value = 100;
-    else if (output.humidity.value < 0)  output.humidity.value = 0;
+    if (output.humidity.value > 100)
+      output.humidity.value = 100;
+    else if (output.humidity.value < 0)
+      output.humidity.value = 0;
   }
 }
 
 /*
  * Read low and high temps from DS18B20 sensors.
  */
-void Hardware::readTempSensors(SensorData& output)
+void
+Hardware::readTempSensors(SensorData& output)
 {
   DEBUG_MSG("Reading temp sensors...\n");
 
-  //request temps
+  // request temps
   thermometers.requestTemperatures();
   delay(300);
   output.high_temp.value = -55;
   output.low_temp.value = 125;
 
-  //loop through the devices on the bus
+  // loop through the devices on the bus
   for (int i = 0; i < monitor_config->num_therm_sensors; i++) {
     float t = thermometers.getTempCByIndex(i);
     if (t < -120) {
@@ -264,43 +266,48 @@ void Hardware::readTempSensors(SensorData& output)
    Public functions
  **********************************************************/
 
-void Hardware::set_analog(byte value)
+void
+Hardware::set_analog(byte value)
 {
-  if (value != Outputs.analog)
-  {
+  if (value != Outputs.analog) {
     Outputs.analog = value;
     Outputs.dirty = true;
   }
 }
 
-void Hardware::set_digital_1(byte value)
+void
+Hardware::set_digital_1(byte value)
 {
-  if (value != Outputs.digital_1)
-  {
+  if (value != Outputs.digital_1) {
     Outputs.digital_1 = value ? 1 : 0;
     Outputs.dirty = true;
   }
 }
 
-void Hardware::set_digital_2(byte value)
+void
+Hardware::set_digital_2(byte value)
 {
-  if (value != Outputs.digital_2)
-  {
+  if (value != Outputs.digital_2) {
     Outputs.digital_2 = value ? 1 : 0;
     Outputs.dirty = true;
   }
 }
 
-void Hardware::write_outputs()
+void
+Hardware::write_outputs()
 {
-  if (Outputs.dirty)
-  {
+  if (Outputs.dirty) {
     int ret;
     byte payload = Outputs.digital_1 | (Outputs.digital_2 << 1);
-    byte cksum = (Outputs.analog & 0x0F) ^ ((Outputs.analog & 0xF0) >> 4) ^ (payload & 0x0F);
+    byte cksum = (Outputs.analog & 0x0F) ^ ((Outputs.analog & 0xF0) >> 4) ^
+                 (payload & 0x0F);
     payload = payload | (cksum << 4);
 
-    DEBUG_MSG("Writing outputs:\n  ANALOG: %d\n  DIGITAL 1: %d\n  DIGITAL 2: %d\n", Outputs.analog, Outputs.digital_1, Outputs.digital_2);
+    DEBUG_MSG(
+      "Writing outputs:\n  ANALOG: %d\n  DIGITAL 1: %d\n  DIGITAL 2: %d\n",
+      Outputs.analog,
+      Outputs.digital_1,
+      Outputs.digital_2);
 
     // Write out payload
     Wire.beginTransmission(I2C_SLAVE_ADDRESS);
@@ -308,28 +315,24 @@ void Hardware::write_outputs()
     Wire.write(payload);
     ret = Wire.endTransmission();
 
-    if (ret == 0)
-    {
+    if (ret == 0) {
       Outputs.dirty = false;
-    }
-    else
-    {
+    } else {
       DEBUG_MSG("Error updating output controller! I2c bus error %d.\n", ret);
-      if (ret == 4)
-      {
-          // status 4 indicates error with bus
-          reset_i2c_bus();
+      if (ret == 4) {
+        // status 4 indicates error with bus
+        reset_i2c_bus();
       }
     }
   }
 }
 
-SensorData Hardware::read_sensors(time_t now)
+SensorData
+Hardware::read_sensors(time_t now)
 {
-    if (now - reading.timestamp >= monitor_config->sample_interval)
-    {
-        readSHTsensor(reading);
-        readTempSensors(reading);
-    }
-    return reading;
+  if (now - reading.timestamp >= monitor_config->sample_interval) {
+    readSHTsensor(reading);
+    readTempSensors(reading);
+  }
+  return reading;
 }

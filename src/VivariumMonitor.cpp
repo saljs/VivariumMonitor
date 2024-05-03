@@ -5,15 +5,15 @@
  */
 
 #include "VivariumMonitor.h"
-#include "Network.h"
 #include "Hardware.h"
+#include "Network.h"
 
-#include <Wire.h>
-#include <OneWire.h>
+#include <DNSServer.h>
 #include <DallasTemperature.h>
 #include <LittleFS.h>
-#include <DNSServer.h>
+#include <OneWire.h>
 #include <WiFiManager.h>
+#include <Wire.h>
 
 /**********************************************************
    Global vars
@@ -28,28 +28,36 @@ ESPTelnet telnet;
  * URL update Callback
  ************************************************************/
 bool updateUrls = false;
-void saveConfigCallback()
+void
+saveConfigCallback()
 {
   updateUrls = true;
 }
 
-
 /**********************************************************
    Public functions
  **********************************************************/
-void VivariumMonitor::setDigitalOneHandler(byte (*func)(SensorData)) {
+void
+VivariumMonitor::setDigitalOneHandler(byte (*func)(SensorData))
+{
   digital_1_func = func;
 }
 
-void VivariumMonitor::setDigitalTwoHandler(byte (*func)(SensorData)) {
+void
+VivariumMonitor::setDigitalTwoHandler(byte (*func)(SensorData))
+{
   digital_2_func = func;
 }
 
-void VivariumMonitor::setAnalogHandler(byte (*func)(SensorData) ) {
+void
+VivariumMonitor::setAnalogHandler(byte (*func)(SensorData))
+{
   analog_func = func;
 }
 
-void VivariumMonitor::init(VivariumMonitorConfig config) {
+void
+VivariumMonitor::init(VivariumMonitorConfig config)
+{
   WiFiManager wifiManager;
   Url update_url;
   char rules_port_tmp[6] = "80";
@@ -59,16 +67,25 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
 #if DEBUG_USE_SERIAL
   Serial.begin(9600);
 #endif
-  
+
   // set up networking
   configTime(monitor_config.ntp_zone, monitor_config.ntp_server);
 
   // Connect to WiFi
-  WiFiManagerParameter update_host("update_host", "Hostname of configuration server.", update_url.host, CONFIG_STR_LEN);
+  WiFiManagerParameter update_host("update_host",
+                                   "Hostname of configuration server.",
+                                   update_url.host,
+                                   CONFIG_STR_LEN);
   wifiManager.addParameter(&update_host);
-  WiFiManagerParameter update_port("update_port", "Port to connect on configuration server.", rules_port_tmp, 6);
+  WiFiManagerParameter update_port("update_port",
+                                   "Port to connect on configuration server.",
+                                   rules_port_tmp,
+                                   6);
   wifiManager.addParameter(&update_port);
-  WiFiManagerParameter update_path("update_path", "Path of configuration file on server.", update_url.path, CONFIG_STR_LEN);
+  WiFiManagerParameter update_path("update_path",
+                                   "Path of configuration file on server.",
+                                   update_url.path,
+                                   CONFIG_STR_LEN);
   wifiManager.addParameter(&update_path);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 #ifndef DEBUG_ESP_CORE
@@ -85,36 +102,35 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
 #endif
 
   if (LittleFS.begin()) {
-    if (updateUrls && strlen(update_url.host) > 0)
-    {
+    if (updateUrls && strlen(update_url.host) > 0) {
       File urlFile = LittleFS.open(FW_URL_FILE, "w");
       update_url.set = true;
       urlFile.write((char*)(&update_url), sizeof(update_url));
       urlFile.close();
-      DEBUG_MSG("Updating update URL file to: http://%s:%d%s\n", update_url.host, update_url.port, update_url.path);
-    }
-    else if (LittleFS.exists(FW_URL_FILE))
-    {
+      DEBUG_MSG("Updating update URL file to: http://%s:%d%s\n",
+                update_url.host,
+                update_url.port,
+                update_url.path);
+    } else if (LittleFS.exists(FW_URL_FILE)) {
       File urlFile = LittleFS.open(FW_URL_FILE, "r");
       urlFile.readBytes((char*)(&update_url), sizeof(update_url));
       urlFile.close();
-      DEBUG_MSG("Update URL: http://%s:%d%s\n", update_url.host, update_url.port, update_url.path);
-    }
-    else
-    {
+      DEBUG_MSG("Update URL: http://%s:%d%s\n",
+                update_url.host,
+                update_url.port,
+                update_url.path);
+    } else {
       update_url.set = false;
     }
     LittleFS.end();
-  }
-  else 
-  {
+  } else {
     update_url.set = false;
     DEBUG_MSG("Error, cannot mount FS! Proceeding without it.\n");
   }
 
-  // If we've entered the config portal, reset to clear out heap and read in new config.
-  if (updateUrls)
-  {
+  // If we've entered the config portal, reset to clear out heap and read in new
+  // config.
+  if (updateUrls) {
     ESP.restart();
   }
 
@@ -122,36 +138,35 @@ void VivariumMonitor::init(VivariumMonitorConfig config) {
   net_interface.init(&monitor_config, update_url);
   hardware_interface.init(&monitor_config);
 
-  // Give NTP time to sync 
+  // Give NTP time to sync
   //  Not garunteed to do so in three seconds, but in most cases will keep
   //  relays from flickering on startup.
   yield();
   delay(3000);
 }
 
-void VivariumMonitor::handle_events() {
+void
+VivariumMonitor::handle_events()
+{
   time_t now;
   byte analog_out = 0, digital_1_out = 0, digital_2_out = 0;
   SensorData data = hardware_interface.read_sensors(now);
   time(&now);
 
   // Update outputs
-  if (analog_func)
-  {
-      analog_out = analog_func(data);
-      hardware_interface.set_analog(analog_out);
+  if (analog_func) {
+    analog_out = analog_func(data);
+    hardware_interface.set_analog(analog_out);
   }
-  if (digital_1_func)
-  {
-      digital_1_out = digital_1_func(data);
-      hardware_interface.set_digital_1(digital_1_out);
+  if (digital_1_func) {
+    digital_1_out = digital_1_func(data);
+    hardware_interface.set_digital_1(digital_1_out);
   }
-  if (digital_2_func)
-  {
-      digital_2_out = digital_2_func(data);
-      hardware_interface.set_digital_2(digital_2_out);
+  if (digital_2_func) {
+    digital_2_out = digital_2_func(data);
+    hardware_interface.set_digital_2(digital_2_out);
   }
-  
+
   hardware_interface.write_outputs();
   net_interface.post_stats(data, digital_1_out, digital_2_out, analog_out);
 
@@ -161,5 +176,5 @@ void VivariumMonitor::handle_events() {
   net_interface.serve_web_interface();
 #if DEBUG_USE_TELNET
   telnet.loop();
-#endif  
+#endif
 }

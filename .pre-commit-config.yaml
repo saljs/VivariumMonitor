@@ -4,5 +4,3 @@ repos:
     hooks:
       - id: clang-format
         args: [--style=Mozilla] # Other coding style: LLVM, GNU, Chromium, Microsoft, Google, WebKit.
-      - id: clang-tidy
-        args: [--checks='boost-*,bugprone-*,performance-*,readability-*,portability-*,modernize-*,clang-analyzer-*,cppcoreguidelines-*']
