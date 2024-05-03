@@ -13,9 +13,12 @@
 #ifndef byte
 typedef unsigned char byte;
 #endif
+#ifndef bool
+#include <stdbool.h>
+#endif
 
 /*
- * A monad that indicates if a sensor reading was sucessful, and it's value.
+ * A monad that indicates if a sensor reading was sucessful, and its value.
  */
 typedef struct SensorReading {
   bool has_error;
