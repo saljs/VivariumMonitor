@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Install GCC 14
-      run: "sudo apt update && sudo apt install gcc-14"
+    - name: Install GCC 13
+      run: "sudo apt update && sudo apt install gcc-13"
       shell: bash
     - name: make
       working-directory: ./extras/tests
