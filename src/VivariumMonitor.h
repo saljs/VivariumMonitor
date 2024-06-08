@@ -7,6 +7,8 @@
 #ifndef VIVARIUMMONITOR_H
 #define VIVARIUMMONITOR_H
 
+#include "Hardware.h"
+#include "Network.h"
 #include "debug.h"
 #include "types.h"
 #include <Arduino.h>
@@ -32,6 +34,8 @@ private:
   byte (*digital_1_func)(SensorData) = NULL;
   byte (*digital_2_func)(SensorData) = NULL;
   byte (*analog_func)(SensorData) = NULL;
+  Network net_interface;
+  Hardware hardware_interface;
 };
 
 #endif

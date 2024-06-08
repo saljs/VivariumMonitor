@@ -37,6 +37,13 @@ Hardware::init(VivariumMonitorConfig* config)
   // set up OneWire interface
   thermometers.begin();
   int numTherms = thermometers.getDeviceCount();
+  if (numTherms != config->num_therm_sensors) {
+    DEBUG_MSG(
+      "!!! Expected %d temp sensors, only found %d. Continuing without them\n",
+      config->num_therm_sensors,
+      numTherms);
+    config->num_therm_sensors = numTherms;
+  }
   for (int i = 0; i < numTherms; i++) {
     DeviceAddress temp;
     if (thermometers.getAddress(temp, i)) {
@@ -45,11 +52,19 @@ Hardware::init(VivariumMonitorConfig* config)
   }
   DEBUG_MSG("Found %d temp sensor(s).\n", numTherms);
 
+  // Set reading to initial value
+  reading.timestamp = 0;
+  reading.humidity.has_error = true;
+  reading.air_temp.has_error = true;
+  reading.high_temp.has_error = true;
+  reading.low_temp.has_error = true;
+
   // set up initial outputs
   Outputs.digital_1 = 0;
   Outputs.digital_2 = 0;
   Outputs.analog = 0;
   Outputs.dirty = true;
+  write_outputs();
 }
 
 /**********************************************************
@@ -144,22 +159,29 @@ reset_i2c_bus()
 /**********************************************************
    Private functions
  **********************************************************/
-void
-Hardware::readSHTsensor(SensorData& output)
+bool
+Hardware::readSHTsensor(SensorData& output, time_t now)
 {
   int bus_status;
   bool use_cache;
   byte cmd = SHT40_READ_CMD;
+
+  if (!monitor_config->has_sht_sensor) {
+    output.air_temp.has_error = true;
+    output.humidity.has_error = true;
+    return false;
+  }
+
   DEBUG_MSG("Reading SHT40 sensor...\n");
-  if (output.timestamp - last_heated >= HEAT_INTERVAL) {
+  if (now - last_heated >= HEAT_INTERVAL) {
     // send heater command
-    last_heated = output.timestamp;
+    last_heated = now;
     cmd = SHT40_HEATER_CMD;
     DEBUG_MSG("Activating heater\n");
   }
 
   // Give the device 15 sec to cool down after turning on heater
-  use_cache = !(cmd == SHT40_HEATER_CMD) && output.timestamp - last_heated < 15;
+  use_cache = !(cmd == SHT40_HEATER_CMD) && now - last_heated < 15;
 
   if (!use_cache) {
     // send command
@@ -175,13 +197,13 @@ Hardware::readSHTsensor(SensorData& output)
       }
       output.air_temp.has_error = true;
       output.humidity.has_error = true;
-      return;
+      return false;
     }
   }
 
   if (cmd == SHT40_HEATER_CMD || use_cache) {
     DEBUG_MSG("Using cached temp/humidity value.\n");
-    return;
+    return false;
   }
 
   // attempt to read from sensor
@@ -191,9 +213,10 @@ Hardware::readSHTsensor(SensorData& output)
     DEBUG_MSG("Error: SHT40 returned %d bytes, not 6.\n", len);
     output.air_temp.has_error = true;
     output.humidity.has_error = true;
-    return;
+    return false;
   }
 
+  bool hasGoodValue = false;
   // read response into a buffer
   int buff[6];
   for (byte i = 0; i < 6; i++) {
@@ -209,6 +232,7 @@ Hardware::readSHTsensor(SensorData& output)
   } else {
     output.air_temp.has_error = false;
     output.air_temp.value = -45.0 + 175.0 * (float)t_ticks / 65535.0;
+    hasGoodValue = true;
   }
 
   // check humidity crc
@@ -224,13 +248,16 @@ Hardware::readSHTsensor(SensorData& output)
       output.humidity.value = 100;
     else if (output.humidity.value < 0)
       output.humidity.value = 0;
+    hasGoodValue = true;
   }
+
+  return hasGoodValue;
 }
 
 /*
  * Read low and high temps from DS18B20 sensors.
  */
-void
+bool
 Hardware::readTempSensors(SensorData& output)
 {
   DEBUG_MSG("Reading temp sensors...\n");
@@ -240,6 +267,8 @@ Hardware::readTempSensors(SensorData& output)
   delay(300);
   output.high_temp.value = -55;
   output.low_temp.value = 125;
+  output.low_temp.has_error = true;
+  output.high_temp.has_error = true;
 
   // loop through the devices on the bus
   for (int i = 0; i < monitor_config->num_therm_sensors; i++) {
@@ -247,9 +276,7 @@ Hardware::readTempSensors(SensorData& output)
     if (t < -120) {
       // Large negative values indicate error conditions
       DEBUG_MSG("Error: Temp sensor %d returned error: %0.f\n", i, t);
-      output.high_temp.has_error = true;
-      output.low_temp.has_error = true;
-      return;
+      return false;
     }
     if (t > output.high_temp.value) {
       output.high_temp.value = t;
@@ -258,8 +285,13 @@ Hardware::readTempSensors(SensorData& output)
       output.low_temp.value = t;
     }
   }
-  output.low_temp.has_error = false;
-  output.high_temp.has_error = false;
+
+  if (monitor_config->num_therm_sensors > 0) {
+    output.low_temp.has_error = false;
+    output.high_temp.has_error = false;
+    return true;
+  }
+  return false;
 }
 
 /**********************************************************
@@ -331,8 +363,10 @@ SensorData
 Hardware::read_sensors(time_t now)
 {
   if (now - reading.timestamp >= monitor_config->sample_interval) {
-    readSHTsensor(reading);
-    readTempSensors(reading);
+    if (readSHTsensor(reading, now) | readTempSensors(reading)) {
+      // If either source updated, update the timestamp
+      reading.timestamp = now;
+    }
   }
   return reading;
 }

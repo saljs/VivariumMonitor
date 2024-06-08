@@ -5,21 +5,14 @@
  */
 
 #include "VivariumMonitor.h"
-#include "Hardware.h"
-#include "Network.h"
 
 #include <DNSServer.h>
-#include <DallasTemperature.h>
 #include <LittleFS.h>
-#include <OneWire.h>
 #include <WiFiManager.h>
-#include <Wire.h>
 
 /**********************************************************
    Global vars
  **********************************************************/
-Network net_interface;
-Hardware hardware_interface;
 #if DEBUG_USE_TELNET
 ESPTelnet telnet;
 #endif
@@ -133,6 +126,7 @@ VivariumMonitor::init(VivariumMonitorConfig config)
   if (updateUrls) {
     ESP.restart();
   }
+  updateUrls = false;
 
   // Initialize submodules
   net_interface.init(&monitor_config, update_url);
@@ -150,8 +144,8 @@ VivariumMonitor::handle_events()
 {
   time_t now;
   byte analog_out = 0, digital_1_out = 0, digital_2_out = 0;
-  SensorData data = hardware_interface.read_sensors(now);
   time(&now);
+  SensorData data = hardware_interface.read_sensors(now);
 
   // Update outputs
   if (analog_func) {

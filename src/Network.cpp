@@ -20,13 +20,6 @@ WiFiServer web_server(80);
 /************************************************************
  * Utility functions
  ************************************************************/
-bool
-HasErrors(SensorData* data)
-{
-  return data->humidity.has_error || data->air_temp.has_error ||
-         data->high_temp.has_error || data->low_temp.has_error;
-}
-
 int
 getHttpResult(WiFiClient& wifi, void (*callback)(Stream&, size_t) = NULL)
 {
@@ -133,6 +126,7 @@ Network::update_firmware(time_t now)
   if (now - last_fw_check < FIRMWARE_CHECK_SECONDS || !update_url.set) {
     return;
   }
+  last_fw_check = now;
   DEBUG_MSG("Checking for updates...\n");
   if (!wifi.connect(update_url.host, update_url.port)) {
     DEBUG_MSG("Unable to connect to server.\n");
@@ -243,7 +237,10 @@ Network::post_stats(SensorData& readings,
   char json_buffer[164];
   size_t json_size;
 
-  if (!HasErrors(&readings)) {
+  if ((!monitor_config->has_sht_sensor ||
+       !(readings.humidity.has_error || readings.air_temp.has_error)) &&
+      (monitor_config->num_therm_sensors == 0 ||
+       !(readings.high_temp.has_error || readings.low_temp.has_error))) {
     last_collected = readings;
   }
 
@@ -263,7 +260,7 @@ Network::post_stats(SensorData& readings,
     strftime(json_buffer + json_size, 20, "%Y-%m-%dT%H:%M:%S", timeinfo);
 
   // if we need to send null values there are more steps
-  if (last_collected.timestamp == last_sent) {
+  if (last_collected.timestamp <= last_sent) {
     char high_temp[7];
     char low_temp[7];
     char air_temp[7];

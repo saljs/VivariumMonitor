@@ -36,8 +36,8 @@ private:
   VivariumMonitorConfig* monitor_config = NULL;
   time_t last_heated = 0;
   SensorData reading;
-  void readSHTsensor(SensorData& output);
-  void readTempSensors(SensorData& output);
+  bool readSHTsensor(SensorData& output, time_t now);
+  bool readTempSensors(SensorData& output);
 };
 
 #endif
