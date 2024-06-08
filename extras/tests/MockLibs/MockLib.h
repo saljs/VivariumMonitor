@@ -4,9 +4,9 @@
 #include <iostream>
 
 #include <cassert>
+#include <cstdint>
 #include <format>
 #include <map>
-#include <optional>
 #include <stack>
 #include <string>
 #include <vector>
