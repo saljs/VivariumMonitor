@@ -12,5 +12,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: make
-      working-directory: ./extra/tests
+      working-directory: ./extras/tests
       run: make unittest
