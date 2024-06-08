@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Install GCC 11
+      run: "sudo apt update && sudo apt install gcc-11"
+      shell: bash
     - name: make
       working-directory: ./extras/tests
       run: make unittest
