@@ -24,16 +24,16 @@ class VivariumMonitor
 {
 public:
   void init(VivariumMonitorConfig config);
-  void setDigitalOneHandler(byte (*)(SensorData));
-  void setDigitalTwoHandler(byte (*)(SensorData));
-  void setAnalogHandler(byte (*)(SensorData));
+  void setDigitalOneHandler(byte (*)(SensorData, time_t));
+  void setDigitalTwoHandler(byte (*)(SensorData, time_t));
+  void setAnalogHandler(byte (*)(SensorData, time_t));
   void handle_events();
 
 private:
   VivariumMonitorConfig monitor_config;
-  byte (*digital_1_func)(SensorData) = NULL;
-  byte (*digital_2_func)(SensorData) = NULL;
-  byte (*analog_func)(SensorData) = NULL;
+  byte (*digital_1_func)(SensorData, time_t) = NULL;
+  byte (*digital_2_func)(SensorData, time_t) = NULL;
+  byte (*analog_func)(SensorData, time_t) = NULL;
   Network net_interface;
   Hardware hardware_interface;
 };

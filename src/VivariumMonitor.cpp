@@ -31,19 +31,19 @@ saveConfigCallback()
    Public functions
  **********************************************************/
 void
-VivariumMonitor::setDigitalOneHandler(byte (*func)(SensorData))
+VivariumMonitor::setDigitalOneHandler(byte (*func)(SensorData, time_t))
 {
   digital_1_func = func;
 }
 
 void
-VivariumMonitor::setDigitalTwoHandler(byte (*func)(SensorData))
+VivariumMonitor::setDigitalTwoHandler(byte (*func)(SensorData, time_t))
 {
   digital_2_func = func;
 }
 
 void
-VivariumMonitor::setAnalogHandler(byte (*func)(SensorData))
+VivariumMonitor::setAnalogHandler(byte (*func)(SensorData, time_t))
 {
   analog_func = func;
 }
@@ -149,15 +149,15 @@ VivariumMonitor::handle_events()
 
   // Update outputs
   if (analog_func) {
-    analog_out = analog_func(data);
+    analog_out = analog_func(data, now);
     hardware_interface.set_analog(analog_out);
   }
   if (digital_1_func) {
-    digital_1_out = digital_1_func(data);
+    digital_1_out = digital_1_func(data, now);
     hardware_interface.set_digital_1(digital_1_out);
   }
   if (digital_2_func) {
-    digital_2_out = digital_2_func(data);
+    digital_2_out = digital_2_func(data, now);
     hardware_interface.set_digital_2(digital_2_out);
   }
 

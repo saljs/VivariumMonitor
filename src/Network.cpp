@@ -234,9 +234,10 @@ Network::post_stats(SensorData& readings,
   WiFiClient wifi;
   time_t timestamp = readings.timestamp;
   struct tm* timeinfo = localtime(&timestamp);
-  char json_buffer[164];
+  char json_buffer[JSONBUF_SIZE];
   size_t json_size;
 
+  // If there are no errors, collect this sample
   if ((!monitor_config->has_sht_sensor ||
        !(readings.humidity.has_error || readings.air_temp.has_error)) &&
       (monitor_config->num_therm_sensors == 0 ||
@@ -254,58 +255,51 @@ Network::post_stats(SensorData& readings,
             monitor_config->stats_url.path);
 
   // populate json buffer
-  json_size =
-    sprintf(json_buffer, "{\"id\":%d,\"timestamp\":\"", ESP.getChipId());
+  json_size = snprintf(
+    json_buffer, JSONBUF_SIZE, "{\"id\":%d,\"timestamp\":\"", ESP.getChipId());
   json_size +=
     strftime(json_buffer + json_size, 20, "%Y-%m-%dT%H:%M:%S", timeinfo);
 
-  // if we need to send null values there are more steps
+  // Deciede what value to send
+  SensorData* toSend = &last_collected;
   if (last_collected.timestamp <= last_sent) {
-    char high_temp[7];
-    char low_temp[7];
-    char air_temp[7];
-    char humidity[7];
-
-    if (readings.high_temp.has_error)
-      strcpy(high_temp, "null");
-    else
-      sprintf(high_temp, "%.2f", readings.high_temp.value);
-    if (readings.low_temp.has_error)
-      strcpy(low_temp, "null");
-    else
-      sprintf(low_temp, "%.2f", readings.low_temp.value);
-    if (readings.air_temp.has_error)
-      strcpy(air_temp, "null");
-    else
-      sprintf(air_temp, "%.2f", readings.air_temp.value);
-    if (readings.humidity.has_error)
-      strcpy(humidity, "null");
-    else
-      sprintf(humidity, "%.2f", readings.humidity.value);
-    json_size += sprintf(
-      json_buffer + json_size,
-      "\",\"high_temp\":%s,\"low_temp\":%s,\"air_temp\":%s,\"humidity\":%s,"
-      "\"digital_1\":%d,\"digital_2\":%d,\"analog\":%d}",
-      high_temp,
-      low_temp,
-      air_temp,
-      humidity,
-      digital_1,
-      digital_2,
-      analog);
-  } else {
-    json_size += sprintf(
-      json_buffer + json_size,
-      "\",\"high_temp\":%.2f,\"low_temp\":%.2f,\"air_temp\":%.2f,\"humidity\":%"
-      ".2f,\"digital_1\":%d,\"digital_2\":%d,\"analog\":%d}",
-      last_collected.high_temp.value,
-      last_collected.low_temp.value,
-      last_collected.air_temp.value,
-      last_collected.humidity.value,
-      digital_1,
-      digital_2,
-      analog);
+    // If we haven't collected any good values, use the most recent
+    // bad one
+    toSend = &readings;
   }
+
+  char high_temp[7];
+  char low_temp[7];
+  char air_temp[7];
+  char humidity[7];
+  if (toSend->high_temp.has_error)
+    strcpy(high_temp, "null");
+  else
+    sprintf(high_temp, "%.2f", toSend->high_temp.value);
+  if (toSend->low_temp.has_error)
+    strcpy(low_temp, "null");
+  else
+    sprintf(low_temp, "%.2f", toSend->low_temp.value);
+  if (toSend->air_temp.has_error)
+    strcpy(air_temp, "null");
+  else
+    sprintf(air_temp, "%.2f", toSend->air_temp.value);
+  if (toSend->humidity.has_error)
+    strcpy(humidity, "null");
+  else
+    sprintf(humidity, "%.2f", toSend->humidity.value);
+  json_size += snprintf(
+    json_buffer + json_size,
+    JSONBUF_SIZE - json_size,
+    "\",\"high_temp\":%s,\"low_temp\":%s,\"air_temp\":%s,\"humidity\":%s,"
+    "\"digital_1\":%d,\"digital_2\":%d,\"analog\":%d}",
+    high_temp,
+    low_temp,
+    air_temp,
+    humidity,
+    digital_1,
+    digital_2,
+    analog);
 
   if (!wifi.connect(monitor_config->stats_url.host,
                     monitor_config->stats_url.port)) {
@@ -329,5 +323,5 @@ Network::post_stats(SensorData& readings,
   }
 
   wifi.stop();
-  last_sent = readings.timestamp;
+  last_sent = toSend->timestamp;
 }

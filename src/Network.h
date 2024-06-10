@@ -43,6 +43,11 @@ private:
 #define FIRMWARE_CHECK_SECONDS 14400
 
 /*
+ * Size of JSON text buffer
+ */
+#define JSONBUF_SIZE 166
+
+/*
  * Web server strings
  */
 #define HTTP_404_RESPONSE                                                      \
