@@ -49,15 +49,16 @@ void loop() {
 }
 
 // alternate these every second
-byte digital_1_handler(SensorData reading)
+byte digital_1_handler(SensorData reading, time_t now)
 {
-  return reading.timestamp % 2 == 0 ? 1 : 0;
+  return now % 2 == 0 ? 1 : 0;
 } 
-byte digital_2_handler(SensorData reading)
+byte digital_2_handler(SensorData reading, time_t now)
 {
-  return reading.timestamp % 2 == 0 ? 0 : 1;
+  return now % 2 == 0 ? 0 : 1;
 } 
-byte analog_handler(SensorData reading)
+// increment this one every time a sensor reading changes
+byte analog_handler(SensorData reading, time_t now)
 {
   return reading.timestamp % 255;
 }
