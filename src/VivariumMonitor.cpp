@@ -56,6 +56,8 @@ VivariumMonitor::init(VivariumMonitorConfig config)
   char rules_port_tmp[6] = "80";
 
   monitor_config = config;
+  update_url.host[0] = '\0';
+  update_url.path[0] = '\0';
 
 #if DEBUG_USE_SERIAL
   Serial.begin(9600);
