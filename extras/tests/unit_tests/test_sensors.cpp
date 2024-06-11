@@ -283,11 +283,22 @@ test_sht40_does_heat()
   cmd = 0x2F;
   MockWireLib->Expects("write.arg_1", 1, &cmd);
 
+  // Set up new sensor response
+  MockWireLib->Returns("endTransmission", 1, &zero);
+  MockWireLib->Returns("requestFrom", 1, &six);
+  bytes[5] = 0x5F;
+  bytes[4] = 0x15;
+  bytes[3] = 0x49;
+  bytes[2] = 0x2E;
+  bytes[1] = 0x15;
+  bytes[0] = 0x15;
+  MockWireLib->Returns(
+    "read", 6, bytes, bytes + 1, bytes + 2, bytes + 3, bytes + 4, bytes + 5);
+
   SensorData cached = testHarness.read_sensors(500);
   assert(MockWireLib->Called("write") == 2);
 
   // Check that we get a cached result
-  assert(cached.timestamp == 20);
   assert(cached.air_temp.has_error == false);
   assert(cached.air_temp.value < 20.5 && cached.air_temp.value > 19.5);
   assert(cached.humidity.has_error == false);

@@ -203,7 +203,7 @@ Hardware::readSHTsensor(SensorData& output, time_t now)
 
   if (cmd == SHT40_HEATER_CMD || use_cache) {
     DEBUG_MSG("Using cached temp/humidity value.\n");
-    return false;
+    return true;
   }
 
   // attempt to read from sensor
@@ -363,7 +363,9 @@ SensorData
 Hardware::read_sensors(time_t now)
 {
   if (now - reading.timestamp >= monitor_config->sample_interval) {
-    if (readSHTsensor(reading, now) | readTempSensors(reading)) {
+    bool update_timestamp = readSHTsensor(reading, now);
+    update_timestamp |= readTempSensors(reading);
+    if (update_timestamp) {
       // If either source updated, update the timestamp
       reading.timestamp = now;
     }
