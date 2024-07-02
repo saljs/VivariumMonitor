@@ -243,6 +243,13 @@ Network::post_stats(SensorData& readings,
       (monitor_config->num_therm_sensors == 0 ||
        !(readings.high_temp.has_error || readings.low_temp.has_error))) {
     last_collected = readings;
+    DEBUG_MSG("Caching sensor data at %t:\n  humidity: %.2f\n  air T: "
+              "%.2f\n  high T: %.2f\n  low T: %.2f",
+              last_collected.timestamp,
+              last_collected.humidity.value,
+              last_collected.air_temp.value,
+              last_collected.high_temp.value,
+              last_collected.low_temp.value);
   }
 
   if (timestamp - last_sent < monitor_config->stats_interval ||
@@ -266,6 +273,9 @@ Network::post_stats(SensorData& readings,
     // If we haven't collected any good values, use the most recent
     // bad one
     toSend = &readings;
+    DEBUG_MSG("Last cached value is stale! %d <= %d. Reporting most recent.\n",
+              last_collected.timestamp,
+              last_sent);
   }
 
   char high_temp[7];
