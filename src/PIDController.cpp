@@ -5,12 +5,13 @@
  */
 
 #include "PIDController.h"
+#include "debug.h"
 
-PIDController::PIDController(float target,
-                             float Kp,
-                             float Ki,
-                             float Kd,
-                             float dropoff)
+PIDController::PIDController(double target,
+                             double Kp,
+                             double Ki,
+                             double Kd,
+                             double dropoff)
 {
   _dropoff = dropoff;
   _target = target;
@@ -22,9 +23,9 @@ PIDController::PIDController(float target,
 byte
 PIDController::add_reading(SensorReading reading, time_t timestamp)
 {
-  float error, derivative;
+  double error, derivative;
   int output, dt = timestamp - last_sampled;
-  if (!timestamp) {
+  if (!timestamp || last_sampled == 0) {
     // Initialize dt to sane value to prevent swing on startup.
     dt = 1;
   }
@@ -38,6 +39,10 @@ PIDController::add_reading(SensorReading reading, time_t timestamp)
     derivative = (error - _prev_error) / dt;
     _integral = (_integral * _dropoff) + (error * dt);
     _prev_error = error;
+    DEBUG_MSG("PID CONTROLLER:\n  err: %.2f\n   dt: %.2f\n  int: %.2f\n",
+              error,
+              derivative,
+              _integral);
   }
 
   // Clamp the output to the range of a byte

@@ -111,6 +111,11 @@ Network::init(VivariumMonitorConfig* config, Url update_endpoint)
 {
   monitor_config = config;
   update_url = update_endpoint;
+  last_collected.timestamp = 0;
+  last_collected.humidity.has_error = true;
+  last_collected.air_temp.has_error = true;
+  last_collected.high_temp.has_error = true;
+  last_collected.low_temp.has_error = true;
   web_server.begin();
 }
 
@@ -232,19 +237,19 @@ Network::post_stats(SensorData& readings,
                     byte analog)
 {
   WiFiClient wifi;
-  time_t timestamp = readings.timestamp;
-  struct tm* timeinfo = localtime(&timestamp);
+  struct tm* timeinfo;
   char json_buffer[JSONBUF_SIZE];
   size_t json_size;
 
   // If there are no errors, collect this sample
-  if ((!monitor_config->has_sht_sensor ||
+  if (last_collected.timestamp < readings.timestamp &&
+      (!monitor_config->has_sht_sensor ||
        !(readings.humidity.has_error || readings.air_temp.has_error)) &&
       (monitor_config->num_therm_sensors == 0 ||
        !(readings.high_temp.has_error || readings.low_temp.has_error))) {
     last_collected = readings;
-    DEBUG_MSG("Caching sensor data at %t:\n  humidity: %.2f\n  air T: "
-              "%.2f\n  high T: %.2f\n  low T: %.2f",
+    DEBUG_MSG("Caching sensor data at %d:\n  humidity: %.2f\n  air T: "
+              "%.2f\n  high T: %.2f\n  low T: %.2f\n",
               last_collected.timestamp,
               last_collected.humidity.value,
               last_collected.air_temp.value,
@@ -252,7 +257,7 @@ Network::post_stats(SensorData& readings,
               last_collected.low_temp.value);
   }
 
-  if (timestamp - last_sent < monitor_config->stats_interval ||
+  if (readings.timestamp - last_sent < monitor_config->stats_interval ||
       !monitor_config->stats_url.set) {
     return;
   }
@@ -260,12 +265,6 @@ Network::post_stats(SensorData& readings,
             monitor_config->stats_url.host,
             monitor_config->stats_url.port,
             monitor_config->stats_url.path);
-
-  // populate json buffer
-  json_size = snprintf(
-    json_buffer, JSONBUF_SIZE, "{\"id\":%d,\"timestamp\":\"", ESP.getChipId());
-  json_size +=
-    strftime(json_buffer + json_size, 20, "%Y-%m-%dT%H:%M:%S", timeinfo);
 
   // Deciede what value to send
   SensorData* toSend = &last_collected;
@@ -277,6 +276,13 @@ Network::post_stats(SensorData& readings,
               last_collected.timestamp,
               last_sent);
   }
+
+  // populate json buffer
+  timeinfo = localtime(&toSend->timestamp);
+  json_size = snprintf(
+    json_buffer, JSONBUF_SIZE, "{\"id\":%d,\"timestamp\":\"", ESP.getChipId());
+  json_size +=
+    strftime(json_buffer + json_size, 20, "%Y-%m-%dT%H:%M:%S", timeinfo);
 
   char high_temp[7];
   char low_temp[7];

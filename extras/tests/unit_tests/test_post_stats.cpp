@@ -118,7 +118,7 @@ test_get_good_value(Network& testHarness)
   readings.air_temp.has_error = true;
   testHarness.post_stats(readings, 1, 0, 160);
   assert(LogHasText("POST"));
-  assert(LogHasText("00:40")); // timestamp
+  assert(LogHasText("00:36")); // timestamp
   assert(LogHasText("\"high_temp\":25.50"));
   assert(LogHasText("\"low_temp\":20.50"));
   assert(LogHasText("\"air_temp\":24.33"));
