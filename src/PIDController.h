@@ -7,6 +7,9 @@
 #ifndef PIDCONTROLLER_H
 #define PIDCONTROLLER_H
 
+// Set a maximum dt of 10 minutes
+#define MAX_DT 600
+
 #include "types.h"
 
 class PIDController

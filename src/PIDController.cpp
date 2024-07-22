@@ -25,7 +25,7 @@ PIDController::add_reading(SensorReading reading, time_t timestamp)
 {
   double error, derivative;
   int output, dt = timestamp - last_sampled;
-  if (!timestamp || last_sampled == 0) {
+  if (!timestamp || last_sampled == 0 || dt > MAX_DT) {
     // Initialize dt to sane value to prevent swing on startup.
     dt = 1;
   }

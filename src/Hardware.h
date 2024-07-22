@@ -11,6 +11,8 @@
 #include <time.h>
 
 #define I2C_SLAVE_ADDRESS 42
+#define NUM_SEND_ATTEMPTS 3
+
 #define SHT40_ADDRESS 0x44
 #define SHT40_READ_CMD 0xFD
 #define SHT40_HEATER_CMD 0x2F

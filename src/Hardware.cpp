@@ -20,7 +20,7 @@ struct
   byte analog;
   byte digital_1;
   byte digital_2;
-  bool dirty;
+  int attempts;
 } Outputs;
 
 OneWire oneWire(ONE_WIRE_BUS);
@@ -63,7 +63,7 @@ Hardware::init(VivariumMonitorConfig* config)
   Outputs.digital_1 = 0;
   Outputs.digital_2 = 0;
   Outputs.analog = 0;
-  Outputs.dirty = true;
+  Outputs.attempts = 0;
   write_outputs();
 }
 
@@ -303,7 +303,7 @@ Hardware::set_analog(byte value)
 {
   if (value != Outputs.analog) {
     Outputs.analog = value;
-    Outputs.dirty = true;
+    Outputs.attempts = NUM_SEND_ATTEMPTS;
   }
 }
 
@@ -312,7 +312,7 @@ Hardware::set_digital_1(byte value)
 {
   if (value != Outputs.digital_1) {
     Outputs.digital_1 = value ? 1 : 0;
-    Outputs.dirty = true;
+    Outputs.attempts = NUM_SEND_ATTEMPTS;
   }
 }
 
@@ -321,14 +321,14 @@ Hardware::set_digital_2(byte value)
 {
   if (value != Outputs.digital_2) {
     Outputs.digital_2 = value ? 1 : 0;
-    Outputs.dirty = true;
+    Outputs.attempts = NUM_SEND_ATTEMPTS;
   }
 }
 
 void
 Hardware::write_outputs()
 {
-  if (Outputs.dirty) {
+  if (Outputs.attempts > 0) {
     int ret;
     byte payload = Outputs.digital_1 | (Outputs.digital_2 << 1);
     byte cksum = (Outputs.analog & 0x0F) ^ ((Outputs.analog & 0xF0) >> 4) ^
@@ -348,7 +348,7 @@ Hardware::write_outputs()
     ret = Wire.endTransmission();
 
     if (ret == 0) {
-      Outputs.dirty = false;
+      Outputs.attempts--;
     } else {
       DEBUG_MSG("Error updating output controller! I2c bus error %d.\n", ret);
       if (ret == 4) {

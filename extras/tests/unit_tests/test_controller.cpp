@@ -18,16 +18,34 @@ test_clean_and_dirty_write()
   MockWireLib->Reset();
 
   testHarness.init(&config);
-  assert(MockWireLib->Called("write") == 2);
+  assert(MockWireLib->Called("write") == 0);
 
   // Test that writing clean outputs doesn't reach hardware
   testHarness.write_outputs();
-  assert(MockWireLib->Called("write") == 2);
+  assert(MockWireLib->Called("write") == 0);
 
   // Change a value and check again
   testHarness.set_analog(50);
   testHarness.write_outputs();
-  assert(MockWireLib->Called("write") == 4);
+  int bytesOut = MockWireLib->Called("write");
+  assert(bytesOut > 0);
+
+  // Assert multiple tries to write value out
+  testHarness.write_outputs();
+  assert(MockWireLib->Called("write") > bytesOut);
+
+  // Assert that we eventually stop sending
+  for (int i = 0; i < 10; i++) {
+    testHarness.write_outputs();
+    int written = MockWireLib->Called("write");
+    if (written == bytesOut) {
+      // success
+      return;
+    }
+    bytesOut = written;
+  }
+  // If the loop goes all the way through the test has failed
+  assert(false);
 }
 
 void
@@ -56,7 +74,7 @@ test_correct_checksum()
   int b1 = 50, b2 = 35;
   MockWireLib->Expects("write.arg_1", 2, &b2, &b1);
   testHarness.write_outputs();
-  assert(MockWireLib->Called("write") == 4);
+  assert(MockWireLib->Called("write") > 0);
 }
 
 int
