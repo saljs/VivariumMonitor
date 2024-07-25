@@ -42,7 +42,6 @@ Hardware::init(VivariumMonitorConfig* config)
       "!!! Expected %d temp sensors, only found %d. Continuing without them\n",
       config->num_therm_sensors,
       numTherms);
-    config->num_therm_sensors = numTherms;
   }
   for (int i = 0; i < numTherms; i++) {
     DeviceAddress temp;
@@ -271,7 +270,8 @@ Hardware::readTempSensors(SensorData& output)
   output.high_temp.has_error = true;
 
   // loop through the devices on the bus
-  for (int i = 0; i < monitor_config->num_therm_sensors; i++) {
+  int numTherms = thermometers.getDeviceCount();
+  for (int i = 0; i < numTherms; i++) {
     float t = thermometers.getTempCByIndex(i);
     if (t < -120) {
       // Large negative values indicate error conditions
@@ -286,7 +286,8 @@ Hardware::readTempSensors(SensorData& output)
     }
   }
 
-  if (monitor_config->num_therm_sensors > 0) {
+  if (monitor_config->num_therm_sensors > 0 &&
+      monitor_config->num_therm_sensors == numTherms) {
     output.low_temp.has_error = false;
     output.high_temp.has_error = false;
     return true;

@@ -86,6 +86,7 @@ test_therm_sensors_read()
   MockTherm->Returns("getTempCByIndex", 3, &t2, &t1, &t3);
 
   // Call read_sensors
+  MockTherm->Returns("getDeviceCount", 1, &three);
   SensorData results = testHarness.read_sensors(20);
 
   // Check our results
@@ -223,6 +224,7 @@ test_temp_sensor_bad_value()
   MockTherm->Returns("getTempCByIndex", 2, &t2, &t1);
 
   // Call read_sensors
+  MockTherm->Returns("getDeviceCount", 1, &two);
   SensorData results = testHarness.read_sensors(20);
 
   // Check our results
@@ -364,6 +366,7 @@ test_sensors_respect_sample_interval()
   MockTherm->Returns("getTempCByIndex", 1, &t);
 
   // Call read_sensors
+  MockTherm->Returns("getDeviceCount", 1, &one);
   SensorData results = testHarness.read_sensors(20);
 
   // Check our results
@@ -374,6 +377,7 @@ test_sensors_respect_sample_interval()
   assert(results.low_temp.value < 20.5 && results.low_temp.value > 19.5);
 
   // Call read_sensors again, make sure we don't hit hardware
+  MockTherm->Returns("getDeviceCount", 1, &one);
   SensorData cached = testHarness.read_sensors(21);
   assert(cached.timestamp == 20);
   assert(MockTherm->Called("getTempCByIndex") < 2);
@@ -400,9 +404,14 @@ test_wrong_number_of_sensors()
   MockTherm->Returns("getAddress", 2, &boolt, &boolt);
 
   testHarness.init(&config);
-  // An error message is printed and the number of sensors is updated
-  assert(config.num_therm_sensors == 2);
+  // An error message is printed but nothing happens
   assert(MockTherm->Called("setResolution") == 2);
+
+  // Check that reading from sensors produces error
+  MockTherm->Returns("getDeviceCount", 1, &two);
+  SensorData reading = testHarness.read_sensors(21);
+  assert(reading.high_temp.has_error);
+  assert(reading.low_temp.has_error);
 }
 
 int

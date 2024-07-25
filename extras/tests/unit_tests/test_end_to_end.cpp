@@ -25,6 +25,8 @@ test_sends_stats_and_update(VivariumMonitor& underTest)
 
   // Call event handler
   ClearGlobalNetLog();
+  int two = 2;
+  MockTherm->Returns("getDeviceCount", 1, &two);
   underTest.handle_events();
 
   // Check we posted stats
@@ -64,6 +66,8 @@ test_sends_stats_again(VivariumMonitor& underTest)
 
   // Call event handler
   ClearGlobalNetLog();
+  int two = 2;
+  MockTherm->Returns("getDeviceCount", 1, &two);
   underTest.handle_events();
 
   // Check we posted stats with new reading

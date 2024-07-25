@@ -18,6 +18,7 @@ test_handler_callback(SensorData reading, time_t now)
   assert(reading.timestamp == start_time);
   return 0;
 }
+
 void
 test_event_handler_called()
 {
@@ -58,6 +59,7 @@ test_event_handler_called()
 
   // Run handler until time changes
   while (start_time == current_time) {
+    MockTherm->Returns("getDeviceCount", 1, &one);
     underTest.handle_events();
   }
   assert(MockTherm->Called("getTempCByIndex") == 1);
