@@ -49,7 +49,6 @@ Hardware::init(VivariumMonitorConfig* config)
       thermometers.setResolution(temp, RESOLUTION);
     }
   }
-  DEBUG_MSG("Found %d temp sensor(s).\n", numTherms);
 
   // Set reading to initial value
   reading.timestamp = 0;
@@ -270,6 +269,7 @@ Hardware::readTempSensors(SensorData& output)
   output.high_temp.has_error = true;
 
   // loop through the devices on the bus
+  thermometers.begin();
   int numTherms = thermometers.getDeviceCount();
   for (int i = 0; i < numTherms; i++) {
     float t = thermometers.getTempCByIndex(i);
