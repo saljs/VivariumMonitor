@@ -61,19 +61,19 @@ test_sends_stats_again(VivariumMonitor& underTest)
   MockTherm->Reset();
 
   // Set up sensor response
+  bool boolt = true;
+  MockTherm->Returns("getDeviceAddress", 2, &boolt, &boolt);
   float t1 = 12.0, t2 = 17.0;
-  MockTherm->Returns("getTempCByIndex", 2, &t2, &t1);
+  MockTherm->Returns("getTempC", 2, &t2, &t1);
 
   // Call event handler
   ClearGlobalNetLog();
-  int two = 2;
-  MockTherm->Returns("getDeviceCount", 1, &two);
   underTest.handle_events();
 
   // Check we posted stats with new reading
   assert(LogHasText("POST /stats/post HTTP/1.0"));
   assert(LogHasText("\"high_temp\":17.00"));
-  assert(MockTherm->Called("getTempCByIndex") == 2);
+  assert(MockTherm->Called("getTempC") == 2);
 }
 
 int
