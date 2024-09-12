@@ -18,7 +18,7 @@
 #define SHT40_HEATER_CMD 0x2F
 #define HEAT_INTERVAL 300
 
-#define RESOLUTION 9
+#define RESOLUTION 12
 #define ONE_WIRE_BUS 2 // D4
 
 /*
