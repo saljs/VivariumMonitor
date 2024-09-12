@@ -257,7 +257,6 @@ Hardware::readTempSensors(SensorData& output)
 
   // request temps
   thermometers.requestTemperatures();
-  thermometers.blockTillConversionComplete();
 
   output.high_temp.value = -55;
   output.low_temp.value = 125;
@@ -288,8 +287,7 @@ Hardware::readTempSensors(SensorData& output)
     }
   }
 
-  if (monitor_config->num_therm_sensors > 0 &&
-      monitor_config->num_therm_sensors == numTherms) {
+  if (monitor_config->num_therm_sensors > 0) {
     output.low_temp.has_error = false;
     output.high_temp.has_error = false;
     return true;
