@@ -4,16 +4,6 @@
 #include "MockLib.h"
 #include "OneWire.h"
 
-class DeviceAddress : public MockLib
-{
-public:
-  DeviceAddress() {}
-  DeviceAddress(int addr);
-  bool operator==(const DeviceAddress& rhs) const;
-  bool operator!=(const DeviceAddress& rhs) const;
-  int addr = -1;
-};
-
 class DallasTemperature : public MockLib
 {
 public:
