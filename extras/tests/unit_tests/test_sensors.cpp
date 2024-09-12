@@ -72,21 +72,18 @@ test_therm_sensors_read()
   // Initialize the hardware, make sure thermometers are set up
   int three = 3;
   MockTherm->Returns("getDeviceCount", 1, &three);
-  bool boolt = true;
-  MockTherm->Returns("getAddress", 3, &boolt, &boolt, &boolt);
 
   testHarness.init(&config);
   assert(MockTherm->Called("begin") == 1);
-  assert(MockTherm->Called("setResolution") == 3);
+  assert(MockTherm->Called("setResolution") == 1);
 
   // Set up sensor response
-  int zero = 0, one = 1, two = 2;
-  MockTherm->Expects("getTempCByIndex.arg_1", 3, &two, &one, &zero);
+  bool boolt = true;
+  MockTherm->Returns("getAddress", 3, &boolt, &boolt, &boolt);
   float t1 = 11.0, t2 = 14.0, t3 = 18.0;
-  MockTherm->Returns("getTempCByIndex", 3, &t2, &t1, &t3);
+  MockTherm->Returns("getTempC", 3, &t2, &t1, &t3);
 
   // Call read_sensors
-  MockTherm->Returns("getDeviceCount", 1, &three);
   SensorData results = testHarness.read_sensors(20);
 
   // Check our results
@@ -215,13 +212,13 @@ test_temp_sensor_bad_value()
   // Initialize the hardware
   int two = 2;
   MockTherm->Returns("getDeviceCount", 1, &two);
-  bool boolt = true;
-  MockTherm->Returns("getAddress", 2, &boolt, &boolt);
   testHarness.init(&config);
 
   // Set up sensor response
+  bool boolt = true;
+  MockTherm->Returns("getAddress", 2, &boolt, &boolt);
   float t1 = 11.0, t2 = -180.0;
-  MockTherm->Returns("getTempCByIndex", 2, &t2, &t1);
+  MockTherm->Returns("getTempC", 2, &t2, &t1);
 
   // Call read_sensors
   MockTherm->Returns("getDeviceCount", 1, &two);
@@ -358,15 +355,14 @@ test_sensors_respect_sample_interval()
   // Initialize the hardware, make sure thermometers are set up
   int one = 1;
   MockTherm->Returns("getDeviceCount", 1, &one);
+  
+  testHarness.init(&config);
   bool boolt = true;
   MockTherm->Returns("getAddress", 1, &boolt);
-
-  testHarness.init(&config);
   float t = 20.0;
-  MockTherm->Returns("getTempCByIndex", 1, &t);
+  MockTherm->Returns("getTempC", 1, &t);
 
   // Call read_sensors
-  MockTherm->Returns("getDeviceCount", 1, &one);
   SensorData results = testHarness.read_sensors(20);
 
   // Check our results
@@ -380,7 +376,7 @@ test_sensors_respect_sample_interval()
   MockTherm->Returns("getDeviceCount", 1, &one);
   SensorData cached = testHarness.read_sensors(21);
   assert(cached.timestamp == 20);
-  assert(MockTherm->Called("getTempCByIndex") < 2);
+  assert(MockTherm->Called("getTempC") < 2);
 }
 
 void
@@ -400,15 +396,12 @@ test_wrong_number_of_sensors()
   // Initialize the hardware, make sure thermometers are set up
   int two = 2;
   MockTherm->Returns("getDeviceCount", 1, &two);
-  bool boolt = true;
-  MockTherm->Returns("getAddress", 2, &boolt, &boolt);
 
   testHarness.init(&config);
-  // An error message is printed but nothing happens
-  assert(MockTherm->Called("setResolution") == 2);
 
   // Check that reading from sensors produces error
-  MockTherm->Returns("getDeviceCount", 1, &two);
+  bool boolt = true, boolf = false;
+  MockTherm->Returns("getAddress", 2, &boolt, &boolf);
   SensorData reading = testHarness.read_sensors(21);
   assert(reading.high_temp.has_error);
   assert(reading.low_temp.has_error);
