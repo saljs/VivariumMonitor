@@ -11,10 +11,10 @@ DallasTemperature::getDeviceCount()
   MOCK_FUNC_R0(int) return 0;
 }
 bool
-DallasTemperature::getAddress(uint8_t* addr, unit8_t arg_1)
+DallasTemperature::getAddress(uint8_t* addr, uint8_t arg_1)
 {
   MOCK_FUNC_R1(bool, int)
-  addr.addr = arg_1;
+  *addr = arg_1;
   return true;
 }
 void
@@ -28,7 +28,7 @@ DallasTemperature::requestTemperatures()
   MOCK_FUNC_V0
 }
 float
-DallasTemperature::getTempC(const uint8_t* arg_1)
+DallasTemperature::getTempC(const uint8_t* addr)
 {
-  MOCK_FUNC_R1(float, int) return 0;
+  MOCK_FUNC_R0(float) return 0;
 }
