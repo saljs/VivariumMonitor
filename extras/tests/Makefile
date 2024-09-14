@@ -1,5 +1,5 @@
 CC=g++
-CPPFLAGS=-std=gnu++20 -gdwarf-2 -g3
+CPPFLAGS=-std=gnu++20 -gdwarf-2 -g3 -include MockLibs/defs.h
 VERSION=-DFIRMWARE_VERSION=\"unittest\"
 
 MOCK_LIBS=build/MockLibs/Arduino.o build/MockLibs/DallasTemperature.o build/MockLibs/ESP8266WiFi.o build/MockLibs/ESP.o build/MockLibs/LittleFS.o build/MockLibs/MockLib.o build/MockLibs/OneWire.o build/MockLibs/Print.o build/MockLibs/Stream.o build/MockLibs/StreamUtils.o build/MockLibs/Updater.o build/MockLibs/WiFiManager.o build/MockLibs/Wire.o

@@ -58,6 +58,8 @@ WiFiManagerGlobal::setSaveConfigCallback(std::function<void()> func)
   MOCK_FUNC_V0
   saveconfig_callback = func;
 }
+void
+WiFiManagerGlobal::setCustomHeadElement(const char* el){ MOCK_FUNC_V0 }
 
 // We take advantage of the fact that there is only ever one of these and proxy
 // it to a global object
@@ -86,4 +88,9 @@ void
 WiFiManager::setSaveConfigCallback(std::function<void()> func)
 {
   GlobalWiFiMan.setSaveConfigCallback(func);
+}
+void
+WiFiManager::setCustomHeadElement(const char* el)
+{
+  GlobalWiFiMan.setCustomHeadElement(el);
 }
