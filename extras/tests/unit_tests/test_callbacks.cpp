@@ -40,9 +40,8 @@ test_event_handler_called()
   int one = 1;
   float t = 15.0;
   bool boolt = true;
-  MockTherm->Returns("getDeviceCount", 1, &one);
   MockTherm->Returns("getAddress", 1, &boolt);
-  MockTherm->Returns("getTempCByIndex", 1, &t);
+  MockTherm->Returns("getTempC", 1, &t);
 
   // Set up mock filesystem
   MockLib* MockFS = GetMock("LittleFS");
@@ -59,10 +58,10 @@ test_event_handler_called()
 
   // Run handler until time changes
   while (start_time == current_time) {
-    MockTherm->Returns("getDeviceCount", 1, &one);
+    MockTherm->Returns("getAddress", 1, &boolt);
     underTest.handle_events();
   }
-  assert(MockTherm->Called("getTempCByIndex") == 1);
+  assert(MockTherm->Called("getTempC") == 1);
 }
 
 int

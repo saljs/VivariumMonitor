@@ -36,18 +36,13 @@ Hardware::init(VivariumMonitorConfig* config)
 
   // set up OneWire interface
   thermometers.begin();
+  thermometers.setResolution(RESOLUTION);
   int numTherms = thermometers.getDeviceCount();
   if (numTherms != config->num_therm_sensors) {
     DEBUG_MSG(
       "!!! Expected %d temp sensors, only found %d. Continuing without them\n",
       config->num_therm_sensors,
       numTherms);
-  }
-  for (int i = 0; i < numTherms; i++) {
-    DeviceAddress temp;
-    if (thermometers.getAddress(temp, i)) {
-      thermometers.setResolution(temp, RESOLUTION);
-    }
   }
 
   // Set reading to initial value
@@ -262,32 +257,37 @@ Hardware::readTempSensors(SensorData& output)
 
   // request temps
   thermometers.requestTemperatures();
-  delay(300);
+
   output.high_temp.value = -55;
   output.low_temp.value = 125;
   output.low_temp.has_error = true;
   output.high_temp.has_error = true;
 
   // loop through the devices on the bus
-  thermometers.begin();
-  int numTherms = thermometers.getDeviceCount();
-  for (int i = 0; i < numTherms; i++) {
-    float t = thermometers.getTempCByIndex(i);
-    if (t < -120) {
-      // Large negative values indicate error conditions
-      DEBUG_MSG("Error: Temp sensor %d returned error: %0.f\n", i, t);
-      return false;
+  for (int i = 0; i < monitor_config->num_therm_sensors; i++)
+  {
+    uint8_t addr;
+    if (thermometers.getAddress(&addr, i)) {
+      float t = thermometers.getTempC(&addr);
+      if (t < -55) {
+        // Large negative values indicate error conditions
+        DEBUG_MSG("Error: Temp sensor %d returned error: %0.f\n", i, t);
+        return false;
+      }
+      if (t > output.high_temp.value) {
+        output.high_temp.value = t;
+      }
+      if (t < output.low_temp.value) {
+        output.low_temp.value = t;
+      }
     }
-    if (t > output.high_temp.value) {
-      output.high_temp.value = t;
-    }
-    if (t < output.low_temp.value) {
-      output.low_temp.value = t;
+    else {
+       DEBUG_MSG("Error: Temp sensor %d cannot be found\n", i);
+       return false;
     }
   }
 
-  if (monitor_config->num_therm_sensors > 0 &&
-      monitor_config->num_therm_sensors == numTherms) {
+  if (monitor_config->num_therm_sensors > 0) {
     output.low_temp.has_error = false;
     output.high_temp.has_error = false;
     return true;

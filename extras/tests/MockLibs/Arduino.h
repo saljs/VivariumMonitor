@@ -20,8 +20,6 @@
 #include "WString.h"
 #include <cstdint>
 
-#define F(x) x
-
 class MockArduino : public MockLib
 {
 public:

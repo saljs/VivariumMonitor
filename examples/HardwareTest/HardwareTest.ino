@@ -13,6 +13,7 @@
 #include <ESP8266WiFi.h>
 
 VivariumMonitor monitor;
+time_t last_reading = 0;
 
 void setup() {
   DEBUG_MSG("Vivarium Monitor firmware " FIRMWARE_VERSION);
@@ -51,6 +52,20 @@ void loop() {
 // alternate these every second
 byte digital_1_handler(SensorData reading, time_t now)
 {
+  if (reading.timestamp > last_reading) {
+    DEBUG_MSG("Sensor readings:\n"
+       " timestamp: %d\n"
+       "  high temp: %f\n"
+       "  low temp:  %f\n"
+       "  humidity:  %f\n"
+       "  air temp:  %f\n", 
+       reading.timestamp,
+       reading.high_temp.value,
+       reading.low_temp.value,
+       reading.humidity.value,
+       reading.air_temp.value);
+    last_reading = reading.timestamp;
+  }
   return now % 2 == 0 ? 1 : 0;
 } 
 byte digital_2_handler(SensorData reading, time_t now)

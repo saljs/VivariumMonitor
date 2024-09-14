@@ -167,7 +167,7 @@ Network::serve_web_interface()
   WiFiClient client = web_server.available();
   if (client) {
     char pathbuf[5];
-    // ReadBufferingStream bufferedRequest(client, 64);
+    WriteBufferingStream client_out(client, 64);
     client.setTimeout(HTTP_TIMEOUT);
     DEBUG_MSG("Client connected to web interface.\n");
     if (client.find("GET ")) {
@@ -180,30 +180,48 @@ Network::serve_web_interface()
       }
       if (strcmp("/", pathbuf) == 0) {
         // Return the status page
-        client.print(HTTP_WEB_ROOT_HEAD);
-        client.print("<li><b>Device ID:</b> ");
-        client.print(ESP.getChipId());
-        client.println("</li>");
+        client_out.print(FPSTR(http_root_header));
+        client_out.printf("<li><b>Device ID:</b> %d</li>", ESP.getChipId());
+        client_out.print(
+          F("<li><b>Firmware version:</b> " FIRMWARE_VERSION "</li>"));
+        client_out.printf(
+          "<li><b>Last update check:</b> <span class=\"time\">%d</span></li>",
+          last_fw_check);
+        client_out.print(F("<li><b>Update URL:</b> "));
+        if (update_url.set) {
+          client_out.printf("http://%s:%d%s</li>",
+                            update_url.host,
+                            update_url.port,
+                            update_url.path);
+        } else {
+          client_out.print(F("Not set</li>"));
+        }
+        client_out.print(F("<li><b>Report URL:</b> "));
+        if (monitor_config->stats_url.set) {
+          client_out.printf("http://%s:%d%s</li>",
+                            monitor_config->stats_url.host,
+                            monitor_config->stats_url.port,
+                            monitor_config->stats_url.path);
+        } else {
+          client_out.print(F("Not set</li>"));
+        }
+        client_out.printf("<li><b>Tempuerature sensors:</b> %d</li>",
+                          monitor_config->num_therm_sensors);
+        client_out.printf("<li><b>Hygrometer: </b>%s</li>",
+                          monitor_config->has_sht_sensor ? "Yes" : "No");
+        client_out.print(FPSTR(http_root_footer));
 
-        client.print("<li><b>Update server:</b> ");
-        client.print(update_url.host);
-        client.println("</li>");
-        client.print("<li><b>Update file path:</b> ");
-        client.print(update_url.path);
-        client.println("</li>");
-
-        client.print("<li><b>Free heap:</b> ");
-        client.print(ESP.getFreeHeap());
-        client.println(" b</li>");
-        client.print("<li><b>Heap fragmentation:</b> ");
-        client.print(ESP.getHeapFragmentation());
-        client.println("</li>");
-        client.print(HTTP_WEB_ROOT_FOOTER);
-
-      } else if (strcmp("/rs", pathbuf) == 0) {
+      } else if (strcmp("/rb?", pathbuf) == 0) {
+        // Reboot device
+        client_out.print(FPSTR(http_page_rb));
+        client_out.flush();
+        client.stop();
+        DEBUG_MSG("Restarting.\n");
+        ESP.restart();
+      } else if (strcmp("/rs?", pathbuf) == 0) {
         // Perfrom a reset
-        client.print(HTTP_WEB_RS);
-        client.flush();
+        client_out.print(FPSTR(http_page_rs));
+        client_out.flush();
         client.stop();
         if (!LittleFS.format()) {
           DEBUG_MSG("Formatting filesystem failed!\n");
@@ -213,16 +231,16 @@ Network::serve_web_interface()
           ESP.reset();
         }
       } else {
-        client.print(HTTP_404_RESPONSE);
+        client_out.print(FPSTR(http_404_response));
       }
     } else {
       // throw out the rest of the content
       while (client.available()) {
         client.read();
       }
-      client.print(HTTP_404_RESPONSE);
+      client_out.print(FPSTR(http_404_response));
     }
-    client.flush();
+    client_out.flush();
     client.stop();
   }
 }

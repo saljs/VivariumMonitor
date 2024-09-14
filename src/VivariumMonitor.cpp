@@ -68,17 +68,15 @@ VivariumMonitor::init(VivariumMonitorConfig config)
 
   // Connect to WiFi
   WiFiManagerParameter update_host("update_host",
-                                   "Hostname of configuration server.",
+                                   "Hostname of update server.",
                                    update_url.host,
                                    CONFIG_STR_LEN);
   wifiManager.addParameter(&update_host);
-  WiFiManagerParameter update_port("update_port",
-                                   "Port to connect on configuration server.",
-                                   rules_port_tmp,
-                                   6);
+  WiFiManagerParameter update_port(
+    "update_port", "Port to connect on update server.", rules_port_tmp, 6);
   wifiManager.addParameter(&update_port);
   WiFiManagerParameter update_path("update_path",
-                                   "Path of configuration file on server.",
+                                   "Path of update file on server.",
                                    update_url.path,
                                    CONFIG_STR_LEN);
   wifiManager.addParameter(&update_path);
@@ -87,6 +85,8 @@ VivariumMonitor::init(VivariumMonitorConfig config)
   wifiManager.setDebugOutput(false);
 #endif
   wifiManager.setConfigPortalTimeout(CONFIG_TIMEOUT);
+  wifiManager.setCustomHeadElement(
+    "<style>button{background-color:" CSS_PRIMARY_COLOR "}</style>");
   wifiManager.autoConnect("VivController-setup");
   strlcpy(update_url.host, update_host.getValue(), sizeof(update_url.host));
   strlcpy(update_url.path, update_path.getValue(), sizeof(update_url.path));

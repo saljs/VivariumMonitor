@@ -20,6 +20,7 @@ class WriteBufferingStream : public Print
 {
 public:
   WriteBufferingStream(Stream& stream, int bufLen);
+  size_t print(const char* data) { return underlay->print(data); }
   template<typename T>
   size_t print(const T& data)
   {

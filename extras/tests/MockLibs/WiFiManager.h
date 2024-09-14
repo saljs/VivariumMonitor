@@ -30,6 +30,7 @@ public:
   void setConfigPortalTimeout(int arg_1);
   void setDebugOutput(bool arg_1);
   void setSaveConfigCallback(std::function<void()> func);
+  void setCustomHeadElement(const char* el);
 };
 
 class WiFiManagerGlobal : public MockLib
@@ -41,6 +42,7 @@ public:
   void setConfigPortalTimeout(int arg_1);
   void setDebugOutput(bool arg_1);
   void setSaveConfigCallback(std::function<void()> func);
+  void setCustomHeadElement(const char* el);
 
 private:
   std::function<void()> saveconfig_callback = NULL;
